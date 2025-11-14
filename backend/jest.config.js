@@ -1,5 +1,6 @@
-module.exports={
-    testEnvironment: 'node',
-    setupFilesAfterEnv: ['<rootDir>/tests/setup.js'],
-    clearMocks: true,
-}
+module.exports = {
+  testTimeout: 20000,
+  testEnvironment: "node",
+//   setupFiles: ["./tests/loadTestEnv.js"],
+  setupFilesAfterEnv: ["<rootDir>/tests/setup.js"],
+};

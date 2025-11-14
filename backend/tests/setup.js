@@ -32,17 +32,26 @@
 //     await mongoose.connection.db.dropDatabase()
 // })
 
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
+require("dotenv").config({ path: ".env.test" });
 
 beforeAll(async () => {
-  const uri = process.env.MONGO_URI; // GitHub Actions injects this
-  await mongoose.connect(uri);
+  if (process.env.NODE_ENV === "test") {
+    const uri = process.env.MONGO_URI;
+    if (!uri) throw new Error("❌ MONGO_URI missing in test environment!");
+
+    await mongoose.connect(uri);
+  }
 });
 
 afterAll(async () => {
-  await mongoose.disconnect();
+  if (process.env.NODE_ENV === "test") {
+    await mongoose.connection.close();
+  }
 });
 
 beforeEach(async () => {
-  await mongoose.connection.db.dropDatabase();
+  if (process.env.NODE_ENV === "test") {
+    await mongoose.connection.db.dropDatabase();
+  }
 });

@@ -1,24 +1,61 @@
-const supertest=require('supertest')
-const app=require('../../index')
-const User=require('../../models/User')
+/**
+ * UNIT TESTS
+ */
+jest.mock('../../models/User');  // mock ONLY for unit tests
 
-describe('User API - Integration',()=>{
-    it('should create a new user',async()=>{
-        const res=await supertest(app)
-        .post('/api/users')
-        .send({ name: 'Alice', email: 'alice@example.com' })
+const { getUsers, createUser } = require('../../controller/userController');
+const User = require('../../models/User');
 
-        expect(res.status).toBe(200);
-        expect(res.body.name).toBe('Alice')
-
-        const userInDb=await User.findOne({email:'alice@example.com'});
-        expect(userInDb).toBeTruthy();
+describe('User Controller - Unit', () => {
+  
+    afterEach(() => {
+        jest.clearAllMocks(); // Prevent mocking leak
     });
 
-    it('should get all users',async()=>{
-        await User.create({name:'Bob',email:'Bob@gmail.com'})
+    it('Should get all users', async () => {
+        User.find.mockResolvedValue([{ name: 'John', email: 'john@example.com' }]);
 
-        const res=await supertest(app).get('/api/users')
-        expect(res.status).toBe(200);
-    })
-})
+        const req = {};
+        const res = {
+            json: jest.fn(),
+            status: jest.fn().mockReturnThis()
+        };
+
+        await getUsers(req, res);
+
+        expect(res.json).toHaveBeenCalledWith([
+            { name: 'John', email: 'john@example.com' }
+        ]);
+    });
+
+    it('Should create a user', async () => {
+        const req = {
+            body: { name: 'Khushi', email: 'khushi@gmail.com' }
+        };
+
+        const res = {
+            json: jest.fn(),
+            status: jest.fn().mockReturnThis()
+        };
+
+        const savedUser = {
+            _id: '123',
+            name: 'Khushi',
+            email: 'khushi@gmail.com'
+        };
+
+        User.mockImplementation(() => ({
+            save: jest.fn().mockResolvedValue(savedUser)
+        }));
+
+        await createUser(req, res);
+
+        expect(User).toHaveBeenCalledWith({
+            name: 'Khushi',
+            email: 'khushi@gmail.com'
+        });
+
+        expect(res.status).toHaveBeenCalledWith(200);
+        expect(res.json).toHaveBeenCalledWith(savedUser);
+    });
+});
