@@ -1,4 +1,4 @@
-name: CI/CD - Tests + Deploy
+name: CI/CD - Tests + Auto Deploy (Free Tier)
 
 on:
   push:
@@ -7,44 +7,38 @@ on:
 jobs:
   test-and-deploy:
     runs-on: ubuntu-latest
+    services:
+      mongo:
+        image: mongo:latest
+        ports: [27017:27017]
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      # ====================== BACKEND TESTS ======================
-      - name: Backend Tests (MongoMemoryServer - Super Fast)
+      # 1. Backend tests
+      - name: Backend Tests
         run: |
-          cd backend
-          npm ci
-          npm test -- --runInBand --maxWorkers=2
+          cd backend && npm ci && npm test
+        env:
+          MONGO_URI: mongodb+srv://khushig159:kishu@cicdtesting.putpixt.mongodb.net/
 
-      # ====================== FRONTEND + E2E ======================
-      - name: Frontend Build & Playwright E2E Tests
+      # 2. Frontend + Playwright E2E
+      - name: Frontend E2E Tests
         run: |
-          cd frontend
-          npm ci
-          npm run build --if-present
+          cd frontend && npm ci && npm run build
           npx playwright install --with-deps
-          
-          # Backend background mein start kar
-          cd ../backend
-          npm start &
-          
-          # Backend ready hone ka wait
+          cd ../backend && npm start &
           cd ../frontend
-          npx wait-on http://localhost:5000/api/users -t 60000
-          
-          # E2E test chala
+          npx wait-on http://localhost:5000/api/users
           npx playwright test
 
-      # ====================== DEPLOY TRIGGERS ======================
+      # 3. Render auto-deploy (free tier trick)
       - name: Trigger Render Deploy (Free Auto Deploy)
         if: success()
         run: |
           curl -X POST "${{ secrets.RENDER_WEBHOOK_URL }}"
 
-      - name: Success Message
+      # Vercel toh khud deploy karega (koi action ki zarurat nahi)
+      - name: Success
         if: success()
-        run: |
-          echo "BHAI SAB TESTS PASS + DEPLOY TRIGGER HO GAYA - TOTAL TIME < 40 SEC!"
+        run: echo "BHAI TESTS PASS + RENDER DEPLOY TRIGGER HO GAYA (free mein!)"
