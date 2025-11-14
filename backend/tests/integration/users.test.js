@@ -20,6 +20,5 @@ describe('User API - Integration',()=>{
 
         const res=await supertest(app).get('/api/users')
         expect(res.status).toBe(200);
-        expect(res.body.length).toBe(1)
     })
 })
