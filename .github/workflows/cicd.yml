@@ -7,6 +7,10 @@ on:
 jobs:
   test-and-deploy:
     runs-on: ubuntu-latest
+
+    env:
+      MONGODB_URL: ${{ secrets.MONGO_URI }}
+
     services:
       mongo:
         image: mongo:latest
