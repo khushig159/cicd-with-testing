@@ -21,6 +21,7 @@ jobs:
           cd backend && npm ci && npm test
         env:
           MONGO_URI: mongodb://localhost:27017/testdb
+          NODE_ENV: test
 
       # 2. Frontend + Playwright E2E
       - name: Frontend E2E Tests
