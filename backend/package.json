@@ -6,7 +6,7 @@
     "test:unit": "jest tests/unit",
     "test:int": "jest tests/integration",
     "start": "nodemon index.js",
-    "test": "jest --runInBand --forceExit --detectOpenHandles --maxWorkers=2"
+    "test": "jest --watchAll"
   },
   "keywords": [],
   "author": "",
