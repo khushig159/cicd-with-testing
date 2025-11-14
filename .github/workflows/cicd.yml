@@ -1,0 +1,44 @@
+name: CI/CD - Tests + Auto Deploy (Free Tier)
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  test-and-deploy:
+    runs-on: ubuntu-latest
+    services:
+      mongo:
+        image: mongo:latest
+        ports: [27017:27017]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # 1. Backend tests
+      - name: Backend Tests
+        run: |
+          cd backend && npm ci && npm test
+        env:
+          MONGO_URI: mongodb://localhost:27017/testdb
+
+      # 2. Frontend + Playwright E2E
+      - name: Frontend E2E Tests
+        run: |
+          cd frontend && npm ci && npm run build
+          npx playwright install --with-deps
+          cd ../backend && npm start &
+          cd ../frontend
+          npx wait-on http://localhost:5000/api/users
+          npx playwright test
+
+      # 3. Render auto-deploy (free tier trick)
+      - name: Trigger Render Deploy (Free Auto Deploy)
+        if: success()
+        run: |
+          curl -X POST "${{ secrets.RENDER_WEBHOOK_URL }}"
+
+      # Vercel toh khud deploy karega (koi action ki zarurat nahi)
+      - name: Success
+        if: success()
+        run: echo "BHAI TESTS PASS + RENDER DEPLOY TRIGGER HO GAYA (free mein!)"
