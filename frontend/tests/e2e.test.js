@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 test('E2E - Add user and see in list - 100% PASS', async ({ page }) => {
-  await page.goto('http://localhost:5173');
+  await page.goto('https://cicd-with-testing.vercel.app');
 
   // Form bharo
   await page.fill('input[placeholder="Enter name"]', 'KHUSHI WINNER');

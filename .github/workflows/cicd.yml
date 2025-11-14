@@ -35,7 +35,7 @@ jobs:
           cd ../backend && MONGO_URI=${{ secrets.MONGO_URI }} npm start &
           cd ../frontend
           npx wait-on http://localhost:5000/api/users
-          npx playwright test
+          npx playwright test --project=chromium
 
       # 3. Render auto-deploy (free tier trick)
       - name: Trigger Render Deploy (Free Auto Deploy)
