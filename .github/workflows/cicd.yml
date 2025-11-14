@@ -1,39 +1,50 @@
-# .github/workflows/ci-cd.yml
+name: CI/CD - Tests + Deploy
 
-name: Ultra Fast CI/CD
-
-on: push
+on:
+  push:
+    branches: [ main ]
 
 jobs:
-  test:
+  test-and-deploy:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
 
-      # Backend test (MongoMemoryServer = 10 sec)
-      - name: Backend Tests (Super Fast)
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # ====================== BACKEND TESTS ======================
+      - name: Backend Tests (MongoMemoryServer - Super Fast)
         run: |
           cd backend
           npm ci
           npm test -- --runInBand --maxWorkers=2
 
-      # Frontend + E2E (Playwright cached)
-      - name: Frontend E2E
-        uses: actions/checkout@v4
-        with:
-          cache: true
+      # ====================== FRONTEND + E2E ======================
+      - name: Frontend Build & Playwright E2E Tests
         run: |
           cd frontend
           npm ci
-          npm run build
+          npm run build --if-present
           npx playwright install --with-deps
-          cd ../backend && npm start &
+          
+          # Backend background mein start kar
+          cd ../backend
+          npm start &
+          
+          # Backend ready hone ka wait
           cd ../frontend
-          npx wait-on http://localhost:5000/api/users -t 30000
-          npx playwright test --project=chromium
+          npx wait-on http://localhost:5000/api/users -t 60000
+          
+          # E2E test chala
+          npx playwright test
 
-      - name: Deploy Triggers
+      # ====================== DEPLOY TRIGGERS ======================
+      - name: Trigger Render Deploy (Free Auto Deploy)
         if: success()
         run: |
           curl -X POST "${{ secrets.RENDER_WEBHOOK_URL }}"
-          echo "BHAI 15 SECOND MEIN SAB HO GAYA!"
+
+      - name: Success Message
+        if: success()
+        run: |
+          echo "BHAI SAB TESTS PASS + DEPLOY TRIGGER HO GAYA - TOTAL TIME < 40 SEC!"
