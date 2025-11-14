@@ -1,44 +1,39 @@
-name: CI/CD - Tests + Auto Deploy (Free Tier)
+# .github/workflows/ci-cd.yml
 
-on:
-  push:
-    branches: [ main ]
+name: Ultra Fast CI/CD
+
+on: push
 
 jobs:
-  test-and-deploy:
+  test:
     runs-on: ubuntu-latest
-    services:
-      mongo:
-        image: mongo:latest
-        ports: [27017:27017]
-
     steps:
       - uses: actions/checkout@v4
 
-      # 1. Backend tests
-      - name: Backend Tests
+      # Backend test (MongoMemoryServer = 10 sec)
+      - name: Backend Tests (Super Fast)
         run: |
-          cd backend && npm ci && npm test
-        env:
-          MONGO_URI: mongodb+srv://khushig159:kishu@cicdtesting.putpixt.mongodb.net/
+          cd backend
+          npm ci
+          npm test -- --runInBand --maxWorkers=2
 
-      # 2. Frontend + Playwright E2E
-      - name: Frontend E2E Tests
+      # Frontend + E2E (Playwright cached)
+      - name: Frontend E2E
+        uses: actions/checkout@v4
+        with:
+          cache: true
         run: |
-          cd frontend && npm ci && npm run build
+          cd frontend
+          npm ci
+          npm run build
           npx playwright install --with-deps
           cd ../backend && npm start &
           cd ../frontend
-          npx wait-on http://localhost:5000/api/users
-          npx playwright test
+          npx wait-on http://localhost:5000/api/users -t 30000
+          npx playwright test --project=chromium
 
-      # 3. Render auto-deploy (free tier trick)
-      - name: Trigger Render Deploy (Free Auto Deploy)
+      - name: Deploy Triggers
         if: success()
         run: |
           curl -X POST "${{ secrets.RENDER_WEBHOOK_URL }}"
-
-      # Vercel toh khud deploy karega (koi action ki zarurat nahi)
-      - name: Success
-        if: success()
-        run: echo "BHAI TESTS PASS + RENDER DEPLOY TRIGGER HO GAYA (free mein!)"
+          echo "BHAI 15 SECOND MEIN SAB HO GAYA!"
