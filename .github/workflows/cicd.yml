@@ -1,4 +1,4 @@
-name: CI/CD - Tests + Auto Deploy (Free Tier)
+name: CI/CD - Tests + Auto Deploy
 
 on:
   push:
